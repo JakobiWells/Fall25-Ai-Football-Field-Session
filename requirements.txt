@@ -1,2 +1,27 @@
-pip install ultralytics
-pip3 install ultralytics
+# Core AI and Computer Vision
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+opencv-python-headless>=4.8.0
+
+# Data Processing and Analysis
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+Pillow>=10.0.0
+
+# Machine Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Video Processing
+ffmpeg-python>=0.2.0
+
+# Utilities
+tqdm>=4.65.0
+scikit-image>=0.21.0
+scipy>=1.11.0
+
+# Optional: For better performance
+# torch-audio>=2.0.0  # Uncomment if you need audio processing
+# tensorboard>=2.13.0  # Uncomment if you need logging
+
