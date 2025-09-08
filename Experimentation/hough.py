@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+#script to detect lines in an image using the Hough Line Transform
+
 # Load the image
 image = cv2.imread("testing_data/image.png")
 
