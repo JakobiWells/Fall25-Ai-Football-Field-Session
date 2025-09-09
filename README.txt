@@ -1,18 +1,58 @@
 Experimentation folder is for testing and unofficial work.
 
-To install dependecies
-pip install -r requirements.txt
+
+---requirements.txt-------
+Text file storing necessary dependecies
+
+
+---Scripts----------
+Primary Scripts are stored in the Scripts folder
+
+
+
+---Cache------------
+Temporary jsons such as yolo detection data are stored in the cache folder
+
+
+
+---Experimentation------
+As the name suggest this folder is purely for experimentation and unused features. To be removed later. 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---Useful Information------------------------------------------------------------------------
+
+---Canny----------------------------------------------
 
 Canny is a 4 step process to detect edges in an image.
-1. Gaussian blue is added to the image to reduce noise.
+1. Gaussian blur is added to the image to reduce noise.
 2. A brightness gradient is calculated for each pixel in the image.
 3. Edges should be thin edges, thus find the local maxima(sharpest part of the gradient) and discard the rest.
 4. Find pixels with high edges which are definitely edges. Weak pixels are considered an edge if they are connected to strong edges. 
 
+
+---Hough Transform -------------------------------------------------------------
 
 Hough Transfrom is a clever way to identify lines in an image. Lines in cartesian coordinates are represented by y = mx + b. 
 This is inconvenient for computers because vertical lines have infinite slope. As such, it is smarter to represent the lines in polar.
