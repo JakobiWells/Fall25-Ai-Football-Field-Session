@@ -20,7 +20,8 @@ As the name suggest this folder is purely for experimentation and unused feature
 
 
 
-
+---yolo_models-----
+Folder that stores various yolo_models
 
 
 
