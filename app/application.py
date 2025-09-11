@@ -3,13 +3,12 @@ from PySide6.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QLabel
 )
 from PySide6.QtGui import QAction
-from PySide6.QtCore import Qt, QAbstractTableModel
+from PySide6.QtCore import Qt
 import sys
 from video import create_video_dock
 from fileAccess import create_file_dock
 from dataSheet import create_data_sheet_dock
 from virtualField import create_virtual_field_dock
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -19,7 +18,8 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.resize(1200, 800)
         
-        
+        # Store current folder path
+        self.current_folder = ""
 
         # --- Menu Bar ---
         menu_bar = self.menuBar()
@@ -30,10 +30,19 @@ class MainWindow(QMainWindow):
         open_folder_action = QAction("Open Folder", self)
         open_folder_action.triggered.connect(self.open_folder)
         file_menu.addAction(open_folder_action)
+        
+        # Add Open Video action
+        open_video_action = QAction("Open Video", self)
+        open_video_action.triggered.connect(self.open_video)
+        file_menu.addAction(open_video_action)
 
         export_action = QAction("Export", self)
         export_action.triggered.connect(self.export_data)
         file_menu.addAction(export_action)
+
+        close_action = QAction("Close", self)
+        close_action.triggered.connect(self.close)
+        file_menu.addAction(close_action)
 
         # Window Menu
         window_menu = menu_bar.addMenu("Window")
@@ -60,32 +69,21 @@ class MainWindow(QMainWindow):
         window_menu.addAction(self.data_dock.toggleViewAction())
         window_menu.addAction(self.virtual_dock.toggleViewAction())
 
-    def create_dock(self, title):
-        dock = QDockWidget(title, self)
-        dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable)
-        dock.setTitleBarWidget(QWidget())
-
-        widget = QWidget()
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel(f"{title} content here"))
-        widget.setLayout(layout)
-
-        widget.setStyleSheet("""
-            QWidget {
-                border: 2px solid #888;
-            }
-        """)
-
-        dock.setWidget(widget)
-        return dock
-
     def open_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Open Folder")
         if folder:
             # Call the file access method to load the folder
             if hasattr(self, 'load_folder'):
                 self.load_folder(folder)
+
+    def open_video(self):
+        video_file, _ = QFileDialog.getOpenFileName(
+            self, "Open Video", self.current_folder or "", "Video Files (*.mp4 *.avi *.mov *.mkv *.wmv)"
+        )
+        if video_file:
+            # Call the video method to open the file
+            if hasattr(self, 'open_video_file'):
+                self.open_video_file(video_file)
 
     def export_data(self):
         print("Exporting data... (stub)")
