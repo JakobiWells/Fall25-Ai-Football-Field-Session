@@ -7,7 +7,7 @@ from datetime import datetime
 # Load a pretrained YOLO model
 # Choose from: yolov8n.pt, yolov8s.pt, yolov8m.pt, yolov8l.pt, yolov8x.pt
 #model = YOLO("bestsecondtryX.pt")  # Extra Large model - best accuracy
-model = YOLO("best.pt")
+model = YOLO("bestX.pt")
 # Input video path
 input_video = "football_film/Wide - Clip 005.mp4"
 #input_video = "nfl.mp4"
