@@ -8,32 +8,8 @@ import sys
 from video import create_video_dock
 from fileAccess import create_file_dock
 from dataSheet import create_data_sheet_dock
+from virtualField import create_virtual_field_dock
 
-class DataModel(QAbstractTableModel):
-    """Simple data model for the table view"""
-    def __init__(self, data=None):
-        super().__init__()
-        self.data = data or []
-        self.headers = ["Frame", "Player", "X", "Y", "Confidence"]
-    
-    def rowCount(self, parent=None):
-        return len(self.data)
-    
-    def columnCount(self, parent=None):
-        return len(self.headers)
-    
-    def data(self, index, role):
-        if role == Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            if row < len(self.data) and col < len(self.data[row]):
-                return str(self.data[row][col])
-        return None
-    
-    def headerData(self, section, orientation, role):
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self.headers[section]
-        return None
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -43,8 +19,7 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.resize(1200, 800)
         
-        # Initialize data model
-        self.data_model = DataModel()
+        
 
         # --- Menu Bar ---
         menu_bar = self.menuBar()
@@ -67,7 +42,7 @@ class MainWindow(QMainWindow):
         self.video_dock = create_video_dock(self)
         self.file_dock = create_file_dock(self)
         self.data_dock = create_data_sheet_dock(self)
-        self.virtual_dock = self.create_dock("Virtual Field")
+        self.virtual_dock = create_virtual_field_dock(self)
 
         # Add docks in desired layout
         self.addDockWidget(Qt.TopDockWidgetArea, self.video_dock)
