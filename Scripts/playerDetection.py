@@ -1,97 +1,126 @@
 import cv2
 import json
 import os
+import numpy as np
 from ultralytics import YOLO
 
-def playerDetection(image_path, model_path="yolov8n.pt"):
+def playerDetection(video_path, model_path="yolo_models/bestPlayerDetectorM.pt", output_path="cache/playerDetection/playerDetection.json"):
     """
-    Detect players in a single image
+    Detect players in a video file
     
     Args:
-        image_path: Path to input image file
+        video_path: Path to input video file
         model_path: Path to YOLO model weights
+        output_path: Path to output JSON file
     
     Returns:
-        Dictionary with detection results
-
-
-        Usage: python playerDetection.py --image path/to/image.jpg --output path/to/output.json --model path/to/model.pt
-
-        Example: python playerDetection.py --image testing_data/image.png --output cache/playerDetection.json --model yolov8n.pt
+        Dictionary with detection results for all frames
     """
-    # Load model
+    # Load YOLO model
     model = YOLO(model_path)
 
-    # Load image
-    frame = cv2.imread(image_path)
-    if frame is None:
-        raise FileNotFoundError(f"Image not found: {image_path}")
+    # Open video
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise FileNotFoundError(f"Video not found: {video_path}")
 
-    detections = []
-    results = model(frame, verbose=False)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    print(f"Processing video: {video_path}")
+    print(f"FPS: {fps}, Total frames: {total_frames}")
 
-    for r in results:
-        for box in r.boxes:
-            cls_id = int(box.cls.cpu().item())
-            conf = float(box.conf.cpu().item())
-            label = model.names[cls_id]
-
-            if label.lower() != "player":  # only keep players
-                continue
-
-            x1, y1, x2, y2 = box.xyxy[0].cpu().tolist()
-            width = x2 - x1
-            height = y2 - y1
-            center_x = x1 + width / 2
-            center_y = y1 + height / 2
-
-            detections.append({
-                "class": label,
-                "class_id": cls_id,
-                "confidence": conf,
-                "bbox": {
-                    "x1": x1,
-                    "y1": y1,
-                    "x2": x2,
-                    "y2": y2,
-                    "width": width,
-                    "height": height,
-                    "center_x": center_x,
-                    "center_y": center_y
-                }
-            })
-
-    return {
-        "frames": [
-            {
-                "frame_number": 0,
-                "timestamp": 0.0,
-                "detections": detections
-            }
-        ]
+    # Initialize results structure
+    results = {
+        "video_info": {
+            "path": video_path,
+            "fps": fps,
+            "total_frames": total_frames
+        },
+        "frames": []
     }
+
+    frame_number = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Run YOLO detection
+        yolo_results = model(frame, verbose=False)
+        detections = []
+
+        for r in yolo_results:
+            for box in r.boxes:
+                cls_id = int(box.cls.cpu().item())
+                conf = float(box.conf.cpu().item())
+                label = model.names[cls_id]
+
+                if label.lower() != "player":
+                    continue
+
+                x1, y1, x2, y2 = box.xyxy[0].cpu().tolist()
+                width = x2 - x1
+                height = y2 - y1
+                center_x = x1 + width / 2
+                center_y = y1 + height / 2
+
+                detections.append({
+                    "class": label,
+                    "class_id": cls_id,
+                    "confidence": conf,
+                    "bbox": {
+                        "x1": float(x1),
+                        "y1": float(y1),
+                        "x2": float(x2),
+                        "y2": float(y2),
+                        "width": float(width),
+                        "height": float(height),
+                        "center_x": float(center_x),
+                        "center_y": float(center_y)
+                    }
+                })
+
+        # Add detection data to results
+        results["frames"].append({
+            "frame_number": frame_number,
+            "timestamp": frame_number / fps,
+            "detections": detections
+        })
+
+        if frame_number % 50 == 0:
+            print(f"Processed frame {frame_number}/{total_frames}")
+
+        frame_number += 1
+
+    cap.release()
+
+    # Save results
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w') as f:
+        json.dump(results, f, indent=2)
+
+    print(f"Player detection complete. Results saved to: {output_path}")
+    return results
 
 
 def main():
-    """Main function for standalone execution"""
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Player Detection Module (Image)')
-    parser.add_argument('--image', type=str, required=True, help='Path to input image file')
-    parser.add_argument('--output', type=str, default='cache/playerDetection.json', 
-                       help='Path to output JSON file')
-    parser.add_argument('--model', type=str, default='yolov8n.pt', 
-                       help='Path to YOLO model weights')
-    
+    parser = argparse.ArgumentParser(description='Player Detection Module (Video)')
+    parser.add_argument('--video', type=str, required=True, help='Path to input video file')
+    parser.add_argument('--output', type=str, default='cache/playerDetection/playerDetection.json', help='Path to output JSON file')
+    parser.add_argument('--model', type=str, default='yolo_models/bestPlayerDetectorM.pt', help='Path to YOLO model weights')
     args = parser.parse_args()
 
-    results = playerDetection(args.image, args.model)
+    try:
+        results = playerDetection(args.video, args.model, args.output)
+        total_detections = sum(len(frame['detections']) for frame in results['frames'])
+        print(f"Detected {total_detections} player objects across {len(results['frames'])} frames")
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
 
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    with open(args.output, "w") as f:
-        json.dump(results, f, indent=4)
-
-    print(f"Detections saved to {args.output}")
+    return 0
 
 
 if __name__ == "__main__":

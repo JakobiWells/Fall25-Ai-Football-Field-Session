@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QDockWidget, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView
+from PySide6.QtWidgets import QDockWidget, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QHBoxLayout, QLabel, QPushButton
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PySide6.QtGui import QFont
 import pandas as pd
 import os
 
@@ -85,6 +86,49 @@ class CSVTableModel(QAbstractTableModel):
         
         return video_file, timestamp
 
+def create_data_sheet_header(parent):
+    """Create a header section inside the dock widget with buttons and controls"""
+    header_widget = QWidget()
+    header_widget.setFixedHeight(60)  # Increased height for header section
+    header_widget.setStyleSheet("""
+        QWidget {
+            background-color: #2b2b2b;
+            border-bottom: 1px solid #555555;
+        }
+    """)
+    
+    layout = QHBoxLayout()
+    layout.setContentsMargins(15, 10, 15, 10)
+    layout.setSpacing(15)
+    
+    # Process button
+    process_btn = QPushButton("Process")
+    process_btn.setStyleSheet("""
+        QPushButton {
+            background-color: #0078d4;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 80px;
+        }
+        QPushButton:hover {
+            background-color: #106ebe;
+        }
+        QPushButton:pressed {
+            background-color: #005a9e;
+        }
+    """)
+    process_btn.clicked.connect(lambda: process_selected_video(parent))
+    layout.addWidget(process_btn)
+    
+    # Add spacing
+    layout.addStretch()
+    
+    header_widget.setLayout(layout)
+    return header_widget
+
 def create_data_sheet_dock(parent):
     dock = QDockWidget("Data Sheet", parent)
     dock.setAllowedAreas(Qt.AllDockWidgetAreas)
@@ -95,6 +139,10 @@ def create_data_sheet_dock(parent):
     layout = QVBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(0)
+    
+    # Add custom header section inside the dock content
+    header_widget = create_data_sheet_header(parent)
+    layout.addWidget(header_widget)
     
     # Create table view
     parent.tableView = QTableView()
@@ -125,6 +173,7 @@ def load_csv_file(parent, csv_path):
     """Load a CSV file into the data sheet"""
     if parent.csv_model.load_csv(csv_path):
         parent.tableView.resizeColumnsToContents()
+        parent.current_csv_path = csv_path  # Store current CSV path for refresh
         print(f"Loaded CSV: {csv_path}")
         return True
     return False
@@ -183,3 +232,51 @@ def play_video_clip(parent, video_path, timestamp=None):
     parent.play_button.setText("Pause")
     parent.time_label.setText("00:00 / 00:00")
     parent.player.play()
+
+def process_selected_video(parent):
+    """Process the currently selected video file"""
+    import subprocess
+    import os
+    from PySide6.QtWidgets import QMessageBox
+    
+    # Get the currently selected row
+    selected_indexes = parent.tableView.selectionModel().selectedRows()
+    if not selected_indexes:
+        QMessageBox.warning(parent, "No Selection", "Please select a video row to process.")
+        return
+    
+    # Get the video file path from the selected row
+    try:
+        video_file, timestamp = parent.csv_model.get_video_info(selected_indexes[0].row())
+        
+        # Construct full path to video file
+        video_dir = "testing_data/video"
+        video_path = os.path.join(video_dir, video_file)
+        
+        if not os.path.exists(video_path):
+            QMessageBox.warning(parent, "File Not Found", f"Video file not found: {video_path}")
+            return
+        
+        # Show processing message
+        QMessageBox.information(parent, "Processing Started", f"Processing video: {video_file}\nThis may take a few minutes...")
+        
+        # Run the processVideo.py script
+        script_path = "Scripts/processVideo.py"
+        cmd = ["python3", script_path, "--video", video_path]
+        
+        print(f"Running command: {' '.join(cmd)}")
+        
+        # Execute the command
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.getcwd())
+        
+        if result.returncode == 0:
+            QMessageBox.information(parent, "Processing Complete", f"Video processed successfully!\nOutput saved to cache/processed_videos/")
+            print("Processing completed successfully")
+            print(result.stdout)
+        else:
+            QMessageBox.critical(parent, "Processing Failed", f"Error processing video:\n{result.stderr}")
+            print(f"Processing failed: {result.stderr}")
+            
+    except Exception as e:
+        QMessageBox.critical(parent, "Error", f"An error occurred: {str(e)}")
+        print(f"Error in process_selected_video: {str(e)}")

@@ -64,7 +64,7 @@ def main():
     parser.add_argument('--input', type=str, required=True, help='Path to input detection JSON file')
     parser.add_argument('--correspondence', type=str, required=True, 
                        help='Path to correspondence points JSON file')
-    parser.add_argument('--output', type=str, default='cache/homographyTransform.json', 
+    parser.add_argument('--output', type=str, default='cache/homography/homographyTransform.json', 
                        help='Path to output transformed JSON file')
     
     args = parser.parse_args()
