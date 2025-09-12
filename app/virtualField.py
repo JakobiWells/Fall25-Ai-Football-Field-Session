@@ -65,10 +65,93 @@ def draw_field(ax):
     ax.set_aspect('equal')
     ax.axis('off')
 
+def toggle_scoreboard(parent, button):
+    """Toggle scoreboard visibility"""
+    if hasattr(parent, 'scoreboard_widget'):
+        if button.isChecked():
+            parent.scoreboard_widget.show()
+        else:
+            parent.scoreboard_widget.hide()
+
+def create_dock_title_bar(dock, parent):
+    """Create a custom title bar for the dock widget with scoreboard toggle"""
+    from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QFont
+    
+    title_bar = QWidget()
+    title_bar.setFixedHeight(30)
+    title_bar.setStyleSheet("""
+        QWidget {
+            background-color: #2b2b2b;
+            border-bottom: 1px solid #555555;
+        }
+        QLabel {
+            color: white;
+            font-weight: bold;
+        }
+        QPushButton {
+            background-color: transparent;
+            border: none;
+            color: white;
+            padding: 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        QPushButton:hover {
+            background-color: #404040;
+        }
+        QPushButton:pressed {
+            background-color: #505050;
+        }
+    """)
+    
+    layout = QHBoxLayout()
+    layout.setContentsMargins(8, 4, 8, 4)
+    layout.setSpacing(8)
+    
+    # Left spacer to center the title
+    left_spacer = QWidget()
+    left_spacer.setFixedWidth(40)  # Space for buttons on the right
+    layout.addWidget(left_spacer)
+    
+    # Title label (centered)
+    title_label = QLabel("Virtual Field")
+    title_label.setFont(QFont("Arial", 10, QFont.Bold))
+    title_label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(title_label)
+    
+    # Right spacer to balance the left spacer
+    right_spacer = QWidget()
+    right_spacer.setFixedWidth(40)  # Space for buttons on the right
+    layout.addWidget(right_spacer)
+    
+    # Scoreboard toggle button (small icon)
+    scoreboard_btn = QPushButton("📊")
+    scoreboard_btn.setFixedSize(20, 20)
+    scoreboard_btn.setCheckable(True)
+    scoreboard_btn.setChecked(True)  # Scoreboard visible by default
+    scoreboard_btn.setToolTip("Toggle Scoreboard")
+    scoreboard_btn.clicked.connect(lambda: toggle_scoreboard(parent, scoreboard_btn))
+    layout.addWidget(scoreboard_btn)
+    
+    # Close button (X)
+    close_btn = QPushButton("✕")
+    close_btn.setFixedSize(20, 20)
+    close_btn.setToolTip("Close")
+    close_btn.clicked.connect(dock.close)
+    layout.addWidget(close_btn)
+    
+    title_bar.setLayout(layout)
+    return title_bar
+
 def create_virtual_field_dock(parent):
     dock = QDockWidget("Virtual Field", parent)
     dock.setAllowedAreas(Qt.AllDockWidgetAreas)
     dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable)
+    
+    # Set custom title bar with scoreboard toggle
+    dock.setTitleBarWidget(create_dock_title_bar(dock, parent))
     
     # Main widget
     main_widget = QWidget()

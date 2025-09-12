@@ -53,21 +53,29 @@ class MainWindow(QMainWindow):
         self.data_dock = create_data_sheet_dock(self)
         self.virtual_dock = create_virtual_field_dock(self)
 
-        # Add docks in desired layout
+        # Add docks in 2x2 grid layout
         self.addDockWidget(Qt.TopDockWidgetArea, self.video_dock)
         self.addDockWidget(Qt.TopDockWidgetArea, self.file_dock)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.data_dock)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.virtual_dock)
 
-        # Place side-by-side
+        # Create 2x2 grid layout
         self.splitDockWidget(self.video_dock, self.file_dock, Qt.Horizontal)
         self.splitDockWidget(self.data_dock, self.virtual_dock, Qt.Horizontal)
+        
+        # Set equal sizes for all dock widgets
+        self.set_equal_dock_sizes()
 
         # Add dock visibility toggles to Window menu
         window_menu.addAction(self.video_dock.toggleViewAction())
         window_menu.addAction(self.file_dock.toggleViewAction())
         window_menu.addAction(self.data_dock.toggleViewAction())
         window_menu.addAction(self.virtual_dock.toggleViewAction())
+        
+        # Add scoreboard toggle action
+        scoreboard_action = QAction("Toggle Scoreboard", self)
+        scoreboard_action.triggered.connect(self.toggle_scoreboard)
+        window_menu.addAction(scoreboard_action)
 
     def open_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Open Folder")
@@ -87,9 +95,40 @@ class MainWindow(QMainWindow):
 
     def export_data(self):
         print("Exporting data... (stub)")
+    
+    def toggle_scoreboard(self):
+        """Toggle scoreboard visibility in the virtual field dock"""
+        if hasattr(self, 'scoreboard_widget'):
+            if self.scoreboard_widget.isVisible():
+                self.scoreboard_widget.hide()
+            else:
+                self.scoreboard_widget.show()
+    
+    def set_equal_dock_sizes(self):
+        """Set all dock widgets to equal sizes in a 2x2 grid"""
+        # Get the main window size
+        main_size = self.size()
+        half_width = main_size.width() // 2
+        half_height = main_size.height() // 2
+        
+        # Resize all dock widgets to equal sizes
+        self.video_dock.resize(half_width, half_height)
+        self.file_dock.resize(half_width, half_height)
+        self.data_dock.resize(half_width, half_height)
+        self.virtual_dock.resize(half_width, half_height)
+        
+        # Ensure the layout is properly applied
+        self.resizeDocks([self.video_dock, self.file_dock, self.data_dock, self.virtual_dock], 
+                        [half_width, half_width, half_width, half_width], Qt.Horizontal)
+        self.resizeDocks([self.video_dock, self.data_dock, self.file_dock, self.virtual_dock], 
+                        [half_height, half_height, half_height, half_height], Qt.Vertical)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    
+    # Set equal dock sizes after window is shown
+    window.set_equal_dock_sizes()
+    
     sys.exit(app.exec())

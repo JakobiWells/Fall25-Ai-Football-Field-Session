@@ -6,10 +6,75 @@ from PySide6.QtCore import Qt, QDir, QFileInfo
 import os
 import pandas as pd
 
+def create_file_title_bar(dock):
+    """Create a custom title bar for the file access dock widget"""
+    from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
+    from PySide6.QtGui import QFont
+    
+    title_bar = QWidget()
+    title_bar.setFixedHeight(30)
+    title_bar.setStyleSheet("""
+        QWidget {
+            background-color: #2b2b2b;
+            border-bottom: 1px solid #555555;
+        }
+        QLabel {
+            color: white;
+            font-weight: bold;
+        }
+        QPushButton {
+            background-color: transparent;
+            border: none;
+            color: white;
+            padding: 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        QPushButton:hover {
+            background-color: #404040;
+        }
+        QPushButton:pressed {
+            background-color: #505050;
+        }
+    """)
+    
+    layout = QHBoxLayout()
+    layout.setContentsMargins(8, 4, 8, 4)
+    layout.setSpacing(8)
+    
+    # Left spacer to center the title
+    left_spacer = QWidget()
+    left_spacer.setFixedWidth(20)  # Space for close button on the right
+    layout.addWidget(left_spacer)
+    
+    # Title label (centered)
+    title_label = QLabel("File Access")
+    title_label.setFont(QFont("Arial", 10, QFont.Bold))
+    title_label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(title_label)
+    
+    # Right spacer to balance the left spacer
+    right_spacer = QWidget()
+    right_spacer.setFixedWidth(20)  # Space for close button on the right
+    layout.addWidget(right_spacer)
+    
+    # Close button (X)
+    close_btn = QPushButton("✕")
+    close_btn.setFixedSize(20, 20)
+    close_btn.setToolTip("Close")
+    close_btn.clicked.connect(dock.close)
+    layout.addWidget(close_btn)
+    
+    title_bar.setLayout(layout)
+    return title_bar
+
 def create_file_dock(parent):
     dock = QDockWidget("File Access", parent)
     dock.setAllowedAreas(Qt.AllDockWidgetAreas)
     dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable)
+    
+    # Set custom title bar
+    dock.setTitleBarWidget(create_file_title_bar(dock))
     
     # Main widget
     main_widget = QWidget()

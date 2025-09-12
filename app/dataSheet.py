@@ -86,63 +86,20 @@ class CSVTableModel(QAbstractTableModel):
         
         return video_file, timestamp
 
-def create_data_sheet_header(parent):
-    """Create a header section inside the dock widget with buttons and controls"""
-    header_widget = QWidget()
-    header_widget.setFixedHeight(60)  # Increased height for header section
-    header_widget.setStyleSheet("""
-        QWidget {
-            background-color: #2b2b2b;
-            border-bottom: 1px solid #555555;
-        }
-    """)
-    
-    layout = QHBoxLayout()
-    layout.setContentsMargins(15, 10, 15, 10)
-    layout.setSpacing(15)
-    
-    # Process button
-    process_btn = QPushButton("Process")
-    process_btn.setStyleSheet("""
-        QPushButton {
-            background-color: #0078d4;
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: bold;
-            min-width: 80px;
-        }
-        QPushButton:hover {
-            background-color: #106ebe;
-        }
-        QPushButton:pressed {
-            background-color: #005a9e;
-        }
-    """)
-    process_btn.clicked.connect(lambda: process_selected_video(parent))
-    layout.addWidget(process_btn)
-    
-    # Add spacing
-    layout.addStretch()
-    
-    header_widget.setLayout(layout)
-    return header_widget
 
 def create_data_sheet_dock(parent):
     dock = QDockWidget("Data Sheet", parent)
     dock.setAllowedAreas(Qt.AllDockWidgetAreas)
     dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetClosable)
+    
+    # Set custom title bar with process button
+    dock.setTitleBarWidget(create_data_sheet_title_bar(dock, parent))
 
     # Main widget
     main_widget = QWidget()
     layout = QVBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(0)
-    
-    # Add custom header section inside the dock content
-    header_widget = create_data_sheet_header(parent)
-    layout.addWidget(header_widget)
     
     # Create table view
     parent.tableView = QTableView()
@@ -232,6 +189,93 @@ def play_video_clip(parent, video_path, timestamp=None):
     parent.play_button.setText("Pause")
     parent.time_label.setText("00:00 / 00:00")
     parent.player.play()
+
+def create_data_sheet_title_bar(dock, parent):
+    """Create a custom title bar for the data sheet dock widget with process button"""
+    from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QFont
+    
+    title_bar = QWidget()
+    title_bar.setFixedHeight(30)
+    title_bar.setStyleSheet("""
+        QWidget {
+            background-color: #2b2b2b;
+            border-bottom: 1px solid #555555;
+        }
+        QLabel {
+            color: white;
+            font-weight: bold;
+        }
+        QPushButton {
+            background-color: transparent;
+            border: none;
+            color: white;
+            padding: 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        QPushButton:hover {
+            background-color: #404040;
+        }
+        QPushButton:pressed {
+            background-color: #505050;
+        }
+    """)
+    
+    layout = QHBoxLayout()
+    layout.setContentsMargins(8, 4, 8, 4)
+    layout.setSpacing(8)
+    
+    # Left spacer to center the title
+    left_spacer = QWidget()
+    left_spacer.setFixedWidth(40)  # Space for buttons on the right
+    layout.addWidget(left_spacer)
+    
+    # Title label (centered)
+    title_label = QLabel("Data Sheet")
+    title_label.setFont(QFont("Arial", 10, QFont.Bold))
+    title_label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(title_label)
+    
+    # Right spacer to balance the left spacer
+    right_spacer = QWidget()
+    right_spacer.setFixedWidth(40)  # Space for buttons on the right
+    layout.addWidget(right_spacer)
+    
+    # Process button
+    process_btn = QPushButton("Process")
+    process_btn.setFixedSize(50, 20)
+    process_btn.setStyleSheet("""
+        QPushButton {
+            background-color: #0078d4;
+            border: none;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        QPushButton:hover {
+            background-color: #106ebe;
+        }
+        QPushButton:pressed {
+            background-color: #005a9e;
+        }
+    """)
+    process_btn.setToolTip("Process Selected Video")
+    process_btn.clicked.connect(lambda: process_selected_video(parent))
+    layout.addWidget(process_btn)
+    
+    # Close button (X)
+    close_btn = QPushButton("✕")
+    close_btn.setFixedSize(20, 20)
+    close_btn.setToolTip("Close")
+    close_btn.clicked.connect(dock.close)
+    layout.addWidget(close_btn)
+    
+    title_bar.setLayout(layout)
+    return title_bar
 
 def process_selected_video(parent):
     """Process the currently selected video file"""
